@@ -33,9 +33,9 @@
 </div>
 
 <script>
-// ====== CONFIG: set your Web App URL here ======
+// ====== CONFIG: your Web App URL (already set) ======
 const API = {
-  url: 'https://script.google.com/macros/s/AKfycbzVDS6hlQBc-sotKFDMOZxSXCjT0hZVpAaWxBFP9PHzgfe9CqnJSfI2306K2YuU2hYA8g/exec',   // e.g. https://script.google.com/macros/s/AKfycb.../exec
+  url: 'https://script.google.com/macros/s/AKfycbzVDS6hlQBc-sotKFDMOZxSXCjT0hZVpAaWxBFP9PHzgfe9CqnJSfI2306K2YuU2hYA8g/exec',
   token: 'Quack',
   ns: 'tiers45_explain'
 };
@@ -66,9 +66,10 @@ function colorFor(title){
   return '#2563eb';
 }
 function badgeFor(title){
-  if (String(title).startsWith('High')) return 'HIGH';
-  if (String(title).startsWith('Light Extreme')) return 'EXTREME (LIGHT)';
-  if (String(title).startsWith('Extreme')) return 'EXTREME';
+  const t = String(title||'');
+  if (t.startsWith('High')) return 'HIGH';
+  if (t.startsWith('Light Extreme')) return 'EXTREME (LIGHT)';
+  if (t.startsWith('Extreme')) return 'EXTREME';
   return 'INFO';
 }
 function linkify(s){
@@ -129,11 +130,11 @@ async function init(){
     });
 
     if (!tiers.length){
-      root.innerHTML = 'No data. Make sure you ran seedTiers45() and the Web App URL is correct.';
+      root.innerHTML = 'No data found. Make sure you ran seedTiers45() and the Web App URL, token, and namespace are correct.';
     }
   }catch(e){
     console.error(e);
-    root.innerHTML = 'Failed to load.';
+    document.getElementById('root').innerHTML = 'Failed to load.';
   }
 }
 init();
