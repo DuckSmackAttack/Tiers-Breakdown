@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Readiness Tiers — Levels 4 & 5 (Explainer)</title>
+<link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#ffffff; --card:#fff; --ink:#202124; --muted:#5f6368; --line:#e5e7eb;
+    --shadow:0 2px 8px rgba(0,0,0,.06);
+  }
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:'Open Sans',system-ui,Segoe UI,Arial,sans-serif;font-size:14px;line-height:1.5;}
+  .wrap{max-width:980px;margin:16px auto;padding:0 16px 40px;}
+  .card{border:1px solid var(--line);border-radius:12px;background:var(--card);box-shadow:var(--shadow);overflow:hidden;margin-bottom:14px}
+  .summary{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--line);background:#fafafa}
+  .dot{width:10px;height:10px;border-radius:999px}
+  .title{font-weight:700}
+  .pill{margin-left:auto;font-size:11px;border-radius:999px;padding:3px 8px;border:1px solid #dfe3ea;background:#fff}
+  .body{padding:12px 14px}
+  .row{display:grid;grid-template-columns:180px 1fr;gap:10px;padding:10px 0;border-bottom:1px dashed var(--line)}
+  .row:last-child{border-bottom:none}
+  .label{font-weight:600}
+  .value{white-space:pre-wrap;word-break:break-word}
+  .meta{color:var(--muted);font-size:12px;margin-top:6px}
+  a{color:#1a73e8;word-break:break-all}
+  @media (max-width:720px){ .row{grid-template-columns:1fr} .label{opacity:.9} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div id="root">Loading…</div>
+</div>
+
+<script>
+// ====== CONFIG: set your Web App URL here ======
+const API = {
+  url: 'https://script.google.com/macros/s/AKfycbzVDS6hlQBc-sotKFDMOZxSXCjT0hZVpAaWxBFP9PHzgfe9CqnJSfI2306K2YuU2hYA8g/exec',   // e.g. https://script.google.com/macros/s/AKfycb.../exec
+  token: 'Quack',
+  ns: 'tiers45_explain'
+};
+
+// Field order (must match the Apps Script seed)
+const FIELDS = [
+  'Title',
+  'Situational Risk',
+  'Business Intent',
+  'Triggers & Indicators',
+  'Office MOO',
+  'HFC Guidelines',
+  'GS Actions for consideration',
+  'Facilities',
+  'Culinary',
+  'EE',
+  'Suggested Comms',
+  'Total CW on site',
+  'Comments'
+];
+
+// Color cue similar to your other tiers
+function colorFor(title){
+  const t = String(title||'');
+  if (t.startsWith('High')) return '#ea580c';          // orange
+  if (t.startsWith('Light Extreme')) return '#ef4444'; // red
+  if (t.startsWith('Extreme')) return '#be185d';       // rose
+  return '#2563eb';
+}
+function badgeFor(title){
+  if (String(title).startsWith('High')) return 'HIGH';
+  if (String(title).startsWith('Light Extreme')) return 'EXTREME (LIGHT)';
+  if (String(title).startsWith('Extreme')) return 'EXTREME';
+  return 'INFO';
+}
+function linkify(s){
+  if(!s) return '';
+  return String(s).replace(/https?:\/\/\S+/gi, m => `<a href="${m}" target="_blank" rel="noopener">${m}</a>`);
+}
+function row(label, value){
+  if(!value) return '';
+  return `
+    <div class="row">
+      <div class="label">${label}</div>
+      <div class="value">${linkify(value)}</div>
+    </div>`;
+}
+
+async function init(){
+  const root = document.getElementById('root');
+  try{
+    const url = `${API.url}?token=${encodeURIComponent(API.token)}&ns=${encodeURIComponent(API.ns)}`;
+    const res = await fetch(url);
+    const data = await res.json();
+    const tiers = Array.isArray(data?.tiers) ? data.tiers : [];
+
+    // Sort to desired order: 4, 4A, 4B, 5A, 5
+    const order = ['High (4)','High (4A)','High (4B)','Light Extreme (5A)','Extreme (5)'];
+    tiers.sort((a,b)=>{
+      const A = a.values?.[0]||'', B = b.values?.[0]||'';
+      return order.indexOf(A) - order.indexOf(B);
+    });
+
+    root.innerHTML = '';
+    tiers.forEach(t=>{
+      const v = t.values || [];
+      const title = v[0] || 'Tier';
+      const dot = colorFor(title);
+      const badge = badgeFor(title);
+
+      const body = FIELDS.map((label, i)=>{
+        if(i===0) return ''; // Title shown in header
+        return row(label, v[i]||'');
+      }).join('');
+
+      const card = document.createElement('article');
+      card.className = 'card';
+      card.innerHTML = `
+        <div class="summary">
+          <span class="dot" style="background:${dot}"></span>
+          <div>
+            <div class="title">${title}</div>
+            <div class="meta">Read-only explainer for how this tier is applied across teams and services.</div>
+          </div>
+          <span class="pill">${badge}</span>
+        </div>
+        <div class="body">
+          ${body}
+        </div>`;
+      root.appendChild(card);
+    });
+
+    if (!tiers.length){
+      root.innerHTML = 'No data. Make sure you ran seedTiers45() and the Web App URL is correct.';
+    }
+  }catch(e){
+    console.error(e);
+    root.innerHTML = 'Failed to load.';
+  }
+}
+init();
+</script>
+</body>
+</html>
